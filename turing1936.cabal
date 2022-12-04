@@ -1,0 +1,44 @@
+cabal-version:      2.4
+name:               turing1936
+version:            0.1.0.0
+
+synopsis: Implementation of Turing machines from Alan Turing's 1936 paper
+          "On computable numbers, with an application to the entscheidungsproblem"
+
+license: MIT
+author:             Alfred Bratterud
+maintainer:         author.name at gmail.com
+
+
+extra-source-files: CHANGELOG.md
+
+library
+    exposed-modules:  Turing1936
+    hs-source-dirs:   src
+    build-depends:    HUnit >= 1.6.2.0,
+                      base >= 4.14.3.0,
+                      hspec >= 2.10.6,
+                      mtl >= 2.2.2
+    default-language: Haskell2010
+    
+                    
+executable turing1936
+    main-is:          Main.hs
+    build-depends:    hspec >= 2.10.6,
+                      base ^>=4.14.3.0,
+                      turing1936
+    hs-source-dirs:   app
+    default-language: Haskell2010
+
+test-suite test
+    type:              exitcode-stdio-1.0
+    hs-source-dirs:    test
+    main-is:           Spec.hs
+    other-modules:     Turing1936Spec
+    build-depends:     HUnit >= 1.6.2.0,
+                       base >= 4.14.3.0,
+                       hspec >= 2.10.6,
+                       turing1936
+    default-language:  Haskell2010
+
+          
