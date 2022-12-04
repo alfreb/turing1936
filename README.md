@@ -4,7 +4,13 @@ Turing machines implemented directly from Turing's 1936 paper titled
 
 The intention is to provide an implementation that's as close to the original as possible, in order to make it easy to verify that they really are Turing machines and not second hand representations. Conventions specific to the implementation language are some times sacrificed for this obejctive.
 
-His first example machine looks like this in the paper: 
+The source used is a digital reprint of the paper found in The Turing Digital Archive:
+https://turingarchive.kings.cam.ac.uk/publications-lectures-and-talks-amtb/amt-b-12
+
+
+## Original machine examples
+
+Turing's first example machine looks like this in the paper: 
 ![Turing's original first example machine](Turing1936_Example1_Original.png)
 
 It looks something like this in code:
@@ -18,12 +24,11 @@ It looks something like this in code:
 ```
 
 His second example looks like this in the paper: 
-![Turing's original first example machine](Turing1936_Example1_Original.png)
+![Turing's original second example machine](Turing1936_Example2_Original.png)
 
 It looks something like this in code:
 ```
   [
-    
     (𝔟, (\x -> True), [_Pә, _R, _Pә, _R, _P0, _R, _R, _P0, _L, _L  ], 𝔬),
     (𝔬, (=='1' ),     [             _R, _Px, _L, _L, _L            ], 𝔬),
     (𝔬, (=='0' ),     [                                            ], 𝔮),
@@ -36,3 +41,8 @@ It looks something like this in code:
     (𝔣, (==none),     [                   _P0,_L,_L                ], 𝔬)
   ]
 ```
+
+The paper itself and reprints provided below are copyright protected:
+Copyright © London Mathematical Society 1937
+
+I have applied to the copyright holder for the right to reproduce pictures of the example machines above, approval pending.
