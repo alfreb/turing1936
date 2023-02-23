@@ -202,7 +202,7 @@ condense []     = []
 condense (s:ss) = if s == none then condense ss else s:(condense ss)
 
 
--- Turin's first example machine
+-- Turing's first example machine
 --
 turingsExample1 :: TuringMachine
 turingsExample1 =
