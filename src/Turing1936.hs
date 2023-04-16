@@ -14,14 +14,13 @@ Copyright © London Mathematical Society 1937
 -}
 
 module Turing1936 (
-  MConfiguration, Tape, Configuration,
-  TuringMachine,
-  TuringMachineRow,
-  TM,
-  CompleteConfiguration, CompleteConfig,
-  Operation, 
-  _L, _R, _P0, _P1, _Any, none, 
-  mconfig, config, tape,  
+  MConfiguration, Tape, TapeIndex, Configuration,
+  TuringMachineTable,TuringMachineRow,
+  Table, TuringMachine (..),
+  CompleteConfiguration, CompleteConfig, getTape, cc,
+  Operation,
+  _L, _R, _P0, _P1, _Any, none,
+  mconfig, config,
   apply, operations, move, moves,
   condense, getRow,
   configMatch, symbolPredicate, symp,
@@ -57,8 +56,8 @@ p. 2 (231)
 type Tape                  = [Char]
 type Symbol                = Char
 
-tape :: CompleteConfiguration -> Tape
-tape (_, _, t) = t
+getTape :: CompleteConfiguration -> Tape
+getTape (_, _, t) = t
 
 {-| "At any stage of the motion of the machine, the number of the scanned square,
 the complete sequence of all symbols on the tape, and the m-configuration will
@@ -86,11 +85,12 @@ type Configuration = (MConfiguration, Symbol)
 type Config = Configuration
 configuration :: CompleteConfiguration -> Configuration
 -- NOTE: Fetching the configuration implies address lookup, where r is the tape
---       index and 𝔖 (r) is the symbol found at r. 
+--       index and 𝔖 (r) is the symbol found at r.
 
 {-| "The changes of the machine and tape between successive complete
 configurations will be called the /moves/ of the machine." -}
-move :: TuringMachine -> CompleteConfiguration -> CompleteConfiguration
+-- move :: TuringMachine -> CompleteConfiguration -> CompleteConfiguration
+move :: TuringMachine -> TuringMachine
 
 
 type Operation             = CompleteConfiguration -> CompleteConfiguration
@@ -98,8 +98,16 @@ type Operations            = [Operation]
 
 type SymbolPred            = Symbol -> Bool
 type TuringMachineRow      = (MConfig, SymbolPred, Operations, MConfig)
-type TuringMachine         = [TuringMachineRow]
-type TM                    = TuringMachine
+type TuringMachineTable    = [TuringMachineRow]
+type Table                 = TuringMachineTable
+
+data TuringMachine = TM {
+  position :: NumScannedSquare,
+  tape     :: Tape,
+  m_config :: MConfig,
+  table    :: TuringMachineTable,
+  comments :: String
+}
 
 symbolPredicate :: TuringMachineRow -> (Symbol -> Bool)
 symbolPredicate (_,s,_,_) = s
@@ -132,7 +140,7 @@ _P s (m, n, t) = (m, n, put s t n)
 
 _P0 :: Operation
 _P0 c = _P '0' c
-  
+
 _P1 :: Operation
 _P1 c = _P '1' c
 
@@ -144,7 +152,7 @@ config = configuration
 configMatch :: Configuration -> TuringMachineRow -> Bool
 configMatch (m, s) (m', sp, _, _) = m == m' && sp s
 
-getRow :: TuringMachine -> Configuration -> TuringMachineRow
+getRow :: TuringMachineTable -> Configuration -> TuringMachineRow
 getRow (r:rs) c = if configMatch c r then r
                   else getRow rs c
 
@@ -152,20 +160,23 @@ apply :: [Operation] -> CompleteConfiguration -> CompleteConfiguration
 apply [] c = c
 apply (op:ops) c = apply ops (op c)
 
-move tm (mconf, n, tape) =
-  let (m, sp, ops, f) = getRow tm $ config (mconf, n, tape) in
+move (TM n tape mconf table s) =
+  let (m, sp, ops, f) = getRow table $ config (mconf, n, tape) in
     let (mconf', n', tape') = apply ops (mconf, n, tape) in
-      (f, n', tape')
+      (TM n' tape' f table s)
 
 
-moves :: Int -> TM -> CompleteConfiguration -> CompleteConfiguration 
-moves 0 tm conf = conf
-moves n tm conf = moves (n-1) tm (move tm conf)
+moves :: Int -> TuringMachine -> TuringMachine
+moves 0 tm = tm
+moves n tm = moves (n-1) (move tm)
 
-step :: Int -> TM -> CompleteConfiguration -> [CompleteConfiguration]
-step 0 tm c = []
-step n tm c = let c' = (move tm c) in
-                c' : (step (n-1) tm c')
+cc :: TuringMachine -> CompleteConfiguration
+cc (TM n tape mc _ _)  = (mc, n, tape)
+
+step :: Int -> TuringMachine -> [CompleteConfiguration]
+step 0 tm = []
+step n tm = let tm' = move tm in
+              cc tm' : (step (n-1) tm')
 
 stripr [] = []
 stripr s = if last s == ' ' then stripr $ init s else s
@@ -175,18 +186,18 @@ highlightTape n t = (take n $ repeat ' ') ++ "^"
 prettyTape n tp = let t = stripr tp in
                     (take n t) ++ "[" ++ [(t !! n)] ++ "]" ++ (drop (n+1) t) ++
                     "\n" ++ highlightTape n t
-                 
+
 
 prettyConfig :: CompleteConfiguration ->  String
 prettyConfig (m, n, t) =
-  --"\nIdx: " ++ (show n) ++ " scanned: '" ++ [(t !! n)] ++ "'\n" ++ 
+  --"\nIdx: " ++ (show n) ++ " scanned: '" ++ [(t !! n)] ++ "'\n" ++
   [m] ++ " : " ++ (stripr t)  ++
   "\n    " ++ highlightTape n t
-                         
+
 
 printConfigs s = mapM_ (putStrLn . prettyConfig) s
 
-printSteps n tm c = printConfigs (step n tm c)
+printSteps n tm = printConfigs (step n tm)
 
 {-| "When the second column is left blank, it is understood that the behaviour of
 the third and fourth columns applies for any symbol and for no symbol." -}
@@ -229,17 +240,19 @@ more than once in the operations column we can simplify the table considerably."
 
 -}
 tm1 :: TuringMachine
-tm1 = 
-  [
-    (𝔟, (==none), [    _P0    ],  𝔟),
-    (𝔟, (=='0' ), [_R, _R, _P1],  𝔟),
-    (𝔟, (=='1' ), [_R, _R, _P0],  𝔟)
-  ]
+tm1 = TM {
+  position = 0,
+  m_config = 𝔟,
+  tape = take 50 $ repeat none,
 
+  table = [
+      (𝔟, (==none), [    _P0    ],  𝔟),
+      (𝔟, (=='0' ), [_R, _R, _P1],  𝔟),
+      (𝔟, (=='1' ), [_R, _R, _P0],  𝔟)
+      ],
 
-tm1init :: CompleteConfiguration 
-tm1init = (𝔟,0,take 50 $ repeat none)
-
+  comments = "Turing's first example machine"
+  }
 
 _Pә :: Operation
 _Pә c = _P 'ә' c
@@ -270,21 +283,24 @@ squares there shall be no blanks."
 (p. 234)
 -}
 tm2 :: TuringMachine
-tm2 =
-  [
-    
-    (𝔟, (\x -> True), [_Pә, _R, _Pә, _R, _P0, _R, _R, _P0, _L, _L  ], 𝔬),
-    (𝔬, (=='1' ),     [             _R, _Px, _L, _L, _L            ], 𝔬),
-    (𝔬, (=='0' ),     [                                            ], 𝔮),
-    (𝔮, (`elem` "01"),[                    _R, _R                  ], 𝔮),
-    (𝔮, (==none),     [                   _P1, _L                  ], 𝔭),
-    (𝔭, (=='x'),      [                    _E, _R                  ], 𝔮),
-    (𝔭, (=='ә'),      [                      _R                    ], 𝔣),
-    (𝔭, (==none),     [                    _L, _L                  ], 𝔭),
-    (𝔣, (/= none),    [                    _R, _R                  ], 𝔣),
-    (𝔣, (==none),     [                   _P0,_L,_L                ], 𝔬)
-  ]
+tm2 = TM {
+  position = 0,
+  m_config = 𝔟,
+  tape = take 100 $ repeat ' ',
 
+  table = [
+      (𝔟, (\x -> True), [_Pә, _R, _Pә, _R, _P0, _R, _R, _P0, _L, _L  ], 𝔬),
+      (𝔬, (=='1' ),     [             _R, _Px, _L, _L, _L            ], 𝔬),
+      (𝔬, (=='0' ),     [                                            ], 𝔮),
+      (𝔮, (`elem` "01"),[                    _R, _R                  ], 𝔮),
+      (𝔮, (==none),     [                   _P1, _L                  ], 𝔭),
+      (𝔭, (=='x'),      [                    _E, _R                  ], 𝔮),
+      (𝔭, (=='ә'),      [                      _R                    ], 𝔣),
+      (𝔭, (==none),     [                    _L, _L                  ], 𝔭),
+      (𝔣, (/= none),    [                    _R, _R                  ], 𝔣),
+      (𝔣, (==none),     [                   _P0,_L,_L                ], 𝔬)
+      ],
 
-tm2init :: CompleteConfiguration
-tm2init = (𝔟, 0, take 100 $ repeat ' ')
+  comments = "Turing's second example machine (Turing 1936)"
+
+  }
