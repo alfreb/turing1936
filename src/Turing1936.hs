@@ -222,7 +222,6 @@ in the m-configuration b with a blank tape.
 ...
 
 
-
 "If (contrary to the description in § 1) we allow the letters L, R to appear
 more than once in the operations column we can simplify the table considerably."
 
