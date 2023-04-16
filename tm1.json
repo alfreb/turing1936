@@ -1,0 +1,11 @@
+{
+    "tape" : " ",
+    "position" : 0,
+    "m-config" : "𝔟",
+    "table" : [
+	["𝔟", " ", [    "P0"      ],  "𝔟"],
+	["𝔟", "0", ["R", "R", "P1"],  "𝔟"],
+	["𝔟", "1", ["R", "R", "P0"],  "𝔟"]
+    ],
+    "comments" : "Turing's first example machine (Turing 1936)"
+}

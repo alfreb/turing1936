@@ -1,0 +1,76 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Turing Machine",
+    "description": "A Turing Machine with state. Fully self-contained.",
+    "type": "object",
+    "properties": {
+        "tape": {
+            "type": "string",
+            "description": "The current tape"
+        },
+	"m-config": {
+	    "type": "string"
+	},
+        "position": {
+            "type": "integer",
+            "description": "The index of the next symbol to be read"
+        },	
+        "table": {
+            "type": "array",
+            "description": "The rows of tuples describing the machine behavior",
+            "items": {
+		"type" : "array",
+		"minItems": 4,
+                "maxItems": 4,
+                "prefixItems": [
+		    {
+			"type": "string",
+			"description": "m-config"
+                    },
+                    {
+			"oneOf" : [
+			    {"type" : "string",
+			     "description" : "True if symbol is contained in the string"},
+			    {"type" : "boolean",
+			     "description" :
+			     "true : Turing's 'Any',e.g. anything but ' '. false : the opposite."
+			    },
+			    {"type" : "null",
+			     "description" : "Turing's blank - e.g. anything matches."
+			    }
+			],
+                        "description": "Symbol predicate."
+                    },
+                    {
+                        "type": "array",			
+                        "description": "operations",
+                        "items": {
+                            "type": "string",
+			    "oneOf" : [
+				{
+				    "enum": ["L", "R", "E"]
+				},
+				{
+                                    "type": "string",
+                                    "pattern": "^P.",
+                                    "minLength": 2,
+                                    "maxLength": 2
+
+				}
+                            ]
+			}
+		    },
+                    {
+                        "type": "string",
+                        "description": "final m-config"
+                    }
+                ]
+            }
+        },
+	"comments" : {
+	    "description" : "Any additional metadata, which will be ignored."
+	}
+    },
+    "required": ["tape", "m-config", "position", "table"],
+    "additionalProperties": false
+}
