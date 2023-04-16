@@ -1,4 +1,20 @@
+{-|
+
+An implementation of Turing Machines from Turing's 1936 paper
+"On computable numbers, with an application to the Entscheidungsproblem."
+Proceedings of the London Mathematical Society, Ser. 2, Vol. 42, 1937.
+
+The reference paper can be found in The Turing Digital Archive, Kings College,
+Cambridge who provides an online version available here:
+
+https://turingarchive.kings.cam.ac.uk/publications-lectures-and-talks-amtb/amt-b-12
+
+Copyright © London Mathematical Society 1937
+
+-}
+
 module Turing1936 (
+  MConfiguration, Tape, Configuration,
   TuringMachine,
   TuringMachineRow,
   TM,
@@ -15,22 +31,11 @@ module Turing1936 (
   tm1, tm2
   )  where
 
+{-|
 
-{-
-
-Source:
-The Turing Digital Archive. Kings College, Cambridge.
-https://turingarchive.kings.cam.ac.uk/publications-lectures-and-talks-amtb/amt-b-12
-Copyright © London Mathematical Society 1937
-
--}
-
-
-{-
-
-We may compare a man in the process of computing a real number to a machine
+"We may compare a man in the process of computing a real number to a machine
 which is only capable of a finite number of conditions q1: q2. .... qR; which
-will be called "m-configurations"
+will be called \"m-configurations\""
 
 p. 2 (231)
 -}
@@ -42,10 +47,10 @@ mconfig :: CompleteConfiguration -> MConfiguration
 mconfig (m, _, _) = m
 
 
-{- "The machine is supplied with a "tape" (the analogue of paper) running
+{-| "The machine is supplied with a "tape" (the analogue of paper) running
 through it, and divided into sections (called "squares") each capable of bearing
 a "symbol". At any moment there is just one square, say the r-th, bearing the
-symbol 𝔖 (r) which is "in the machine"
+symbol 𝔖 (r) which is \"in the machine\""
 
 p. 2 (231)
 -}
@@ -55,7 +60,7 @@ type Symbol                = Char
 tape :: CompleteConfiguration -> Tape
 tape (_, _, t) = t
 
-{- "At any stage of the motion of the machine, the number of the scanned square,
+{-| "At any stage of the motion of the machine, the number of the scanned square,
 the complete sequence of all symbols on the tape, and the m-configuration will
 be said to describe the _complete configuration_ at that stage." -}
 type NumScannedSquare      = Int
@@ -70,7 +75,7 @@ type CompleteConfig = CompleteConfiguration
 scannedSymbol :: CompleteConfiguration -> Symbol
 scannedSymbol (_, n, tape) = tape !! n
 
-{- "The possible behaviour of the machine at any moment is determined by the
+{-| "The possible behaviour of the machine at any moment is determined by the
 m-configuration qn and the scanned symbol 𝔖 (r). This pair qn, 𝔖 (r) will be
 called the "configuration": thus the configuration determines the possible
 behaviour of the machine."
@@ -83,8 +88,8 @@ configuration :: CompleteConfiguration -> Configuration
 -- NOTE: Fetching the configuration implies address lookup, where r is the tape
 --       index and 𝔖 (r) is the symbol found at r. 
 
-{- "The changes of the machine and tape between successive complete
-configurations will be called the _moves_ of the machine." -}
+{-| "The changes of the machine and tape between successive complete
+configurations will be called the /moves/ of the machine." -}
 move :: TuringMachine -> CompleteConfiguration -> CompleteConfiguration
 
 
@@ -183,13 +188,10 @@ printConfigs s = mapM_ (putStrLn . prettyConfig) s
 
 printSteps n tm c = printConfigs (step n tm c)
 
-
+{-| "When the second column is left blank, it is understood that the behaviour of
+the third and fourth columns applies for any symbol and for no symbol." -}
 none = ' '
 
-{- "When the second column is left blank, it is understood that the behaviour of
-the third and fourth columns applies for any symbol and for no symbol." -}
-ignore :: Symbol -> Bool
-ignore x = True
 
 isMconfig :: MConfig -> Bool
 isMconfig x = x `elem` mconfigNames
@@ -201,18 +203,41 @@ condense :: Tape -> Tape
 condense []     = []
 condense (s:ss) = if s == none then condense ss else s:(condense ss)
 
+{-|  "A machine can be constructed to compute the sequence 010101... .
+The machine is to have the four m-configurations "𝔟", "𝔠", "𝔨", "𝔢" and is
+capable of printing "0" and "1". The behaviour of the machine is described
+in the following table in which "R" means "the machine moves so that it scans
+the square immediately on the right of the one it was scanning previously".
+Similarly for "L". "E" means "the scanned symbol is erased" and "P" stands for
+"prints". This table (and all succeeding tables of the same kind) is to be
+understood to mean that for a configuration described in the first two columns
+the operations in the third column are carried out successively, and the machine
+then goes over into the m-configuration described in the last column. When the
+second column is left blank, it is understood that the behaviour of the third
+and fourth columns applies for any symbol and for no symbol. The machine starts
+in the m-configuration b with a blank tape.
 
--- Turin's first example machine
---
-turingsExample1 :: TuringMachine
-turingsExample1 =
+(p. 233)
+
+...
+
+
+
+"If (contrary to the description in § 1) we allow the letters L, R to appear
+more than once in the operations column we can simplify the table considerably."
+
+(p. 234)
+
+-}
+tm1 :: TuringMachine
+tm1 = 
   [
     (𝔟, (==none), [    _P0    ],  𝔟),
     (𝔟, (=='0' ), [_R, _R, _P1],  𝔟),
     (𝔟, (=='1' ), [_R, _R, _P0],  𝔟)
   ]
 
-tm1 = turingsExample1
+
 tm1init :: CompleteConfiguration 
 tm1init = (𝔟,0,take 50 $ repeat none)
 
@@ -234,8 +259,19 @@ _Any = (/= none)
 
 isSymbol = _Any
 
-turingsExample2 :: TuringMachine
-turingsExample2 =
+{-| "As a slightly more difficult example we can construct a machine to compute
+the sequence 001011011101111011111 The machine is to be capable of five
+m-configurations, viz. "𝔬", "𝔮", "𝔭", "𝔣", "𝔟" and of printing "ә", "x", "0",
+"1". The first three symbols on the tape will be "әә0"; the other figures follow
+on alternate squares. On the intermediate squares we never print anything but
+"x". These letters serve to "keep the place " for us and are erased when we have
+finished with them. We also arrange that in the sequence of figures on alternate
+squares there shall be no blanks."
+
+(p. 234)
+-}
+tm2 :: TuringMachine
+tm2 =
   [
     
     (𝔟, (\x -> True), [_Pә, _R, _Pә, _R, _P0, _R, _R, _P0, _L, _L  ], 𝔬),
@@ -250,6 +286,6 @@ turingsExample2 =
     (𝔣, (==none),     [                   _P0,_L,_L                ], 𝔬)
   ]
 
-tm2 = turingsExample2
+
 tm2init :: CompleteConfiguration
 tm2init = (𝔟, 0, take 100 $ repeat ' ')

@@ -1,11 +1,12 @@
 cabal-version:      2.4
 name:               turing1936
-version:            0.1.0.0
+version:            0.1.0
+homepage:           https://github.com/alfreb/turing1936
 
-synopsis: Implementation of Turing machines from Alan Turing's 1936 paper
-          "On computable numbers, with an application to the entscheidungsproblem"
-
-license: MIT
+synopsis:           Implementation of Turing machines from Alan Turing's 1936 paper
+                    "On computable numbers, with an application to the entscheidungsproblem"
+license-file:       LICENSE
+license:            MIT
 author:             Alfred Bratterud
 maintainer:         author.name at gmail.com
 
