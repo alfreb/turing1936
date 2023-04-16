@@ -17,13 +17,13 @@ completeConfig2 :: CompleteConfiguration
 completeConfig2 = ('𝔟', 7, "Turing's Machine")
 
 tmrow1 :: TuringMachineRow
-tmrow1 = (𝔟, (==none), [_P0],  𝔟)
+tmrow1 = (𝔟, (==none), [P0],  𝔟)
 
 tmrow2 :: TuringMachineRow
-tmrow2 = (𝔟, (=='0'), [_R, _R, _P1],  𝔟)
+tmrow2 = (𝔟, (=='0'), [R, R, P1],  𝔟)
 
 tmrow3 :: TuringMachineRow
-tmrow3 = (𝔟, (=='1'), [_R, _R, _P0],  𝔟)
+tmrow3 = (𝔟, (=='1'), [R, R, P0],  𝔟)
 
 -- tm1init :: CompleteConfiguration
 -- tm1init = (𝔟, 0, take 50 $ repeat ' ')
@@ -80,22 +80,22 @@ spec = do
 
     describe "Operation R" $ do
       it "scans the symbol to the right" $ do
-        config (_R completeConfig1) `shouldBe` ('𝔞', 'a')
-        config (_R completeConfig2) `shouldBe` ('𝔟', ' ')
+        config (perform R completeConfig1) `shouldBe` ('𝔞', 'a')
+        config (perform R completeConfig2) `shouldBe` ('𝔟', ' ')
 
     describe "Operation L" $ do
       it "scans the symbol to the left" $ do
-        config (_L completeConfig1) `shouldBe` ('𝔞', ' ')
+        config (perform L completeConfig1) `shouldBe` ('𝔞', ' ')
 
     describe "Operation P0" $ do
       it "puts '0' on the tape at the current position" $ do
-        getTape (_P0 completeConfig1) `shouldBe` "Clean 0achine"
-        getTape (_P0 completeConfig2) `shouldBe` "Turing'0 Machine"
+        getTape (perform P0 completeConfig1) `shouldBe` "Clean 0achine"
+        getTape (perform P0 completeConfig2) `shouldBe` "Turing'0 Machine"
 
     describe "Operation P0" $ do
       it "puts '1' on the tape at the current position" $ do
-        getTape (_P1 completeConfig1) `shouldBe` "Clean 1achine"
-        getTape (_P1 completeConfig2) `shouldBe` "Turing'1 Machine"
+        getTape (perform P1 completeConfig1) `shouldBe` "Clean 1achine"
+        getTape (perform P1 completeConfig2) `shouldBe` "Turing'1 Machine"
 
     describe "A Turing Machine Row" $ do
       it "Is a four-tuple that starts with an m-config" $ do
@@ -109,7 +109,7 @@ spec = do
       it "The third element is a list of operations" $ do
         let (_,_,ops,_) = tmrow1 in
           let op = ops !! 0 in
-            config (op completeConfig1) `shouldBe` ('𝔞', '0')
+            config (perform op completeConfig1) `shouldBe` ('𝔞', '0')
 
       it "The fourth element is the name of the next m-config" $ do
         let (_,_,_,f) = tmrow1 in

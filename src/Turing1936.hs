@@ -18,8 +18,7 @@ module Turing1936 (
   TuringMachineTable,TuringMachineRow,
   Table, TuringMachine (..),
   CompleteConfiguration, CompleteConfig, getTape, cc,
-  Operation,
-  _L, _R, _P0, _P1, _Any, none,
+  Operation(..), perform, _Any, none,
   mconfig, config,
   apply, operations, move, moves,
   condense, getRow,
@@ -92,8 +91,12 @@ configurations will be called the /moves/ of the machine." -}
 -- move :: TuringMachine -> CompleteConfiguration -> CompleteConfiguration
 move :: TuringMachine -> TuringMachine
 
+data Operation = L  | R
+                 | P0 | P1 | Pә | Px
+                 | P Char
+                 | E
 
-type Operation             = CompleteConfiguration -> CompleteConfiguration
+type Op                    = CompleteConfiguration -> CompleteConfiguration
 type Operations            = [Operation]
 
 type SymbolPred            = Symbol -> Bool
@@ -127,10 +130,10 @@ finalMconfig (_,_,_,f) = f
 gothicFraktur = [𝔞,𝔟,𝔠,𝔡,𝔢,𝔣,𝔤,𝔥,𝔦,𝔧,𝔨,𝔩,𝔪,𝔫,𝔬,𝔭,𝔮,𝔯,𝔰,𝔱,𝔲,𝔳,𝔴,𝔵,𝔶,𝔷]
 mconfigNames  = gothicFraktur
 
-_R :: Operation
+_R :: Op
 _R (m, n, t) = (m, n + 1, t)
 
-_L :: Operation
+_L :: Op
 _L (m, n, t) = (m, n - 1, t)
 
 put c t n = (take n t ++ [c] ++ drop (n + 1) t)
@@ -138,11 +141,17 @@ put c t n = (take n t ++ [c] ++ drop (n + 1) t)
 _P :: Symbol -> CompleteConfiguration -> CompleteConfiguration
 _P s (m, n, t) = (m, n, put s t n)
 
-_P0 :: Operation
-_P0 c = _P '0' c
 
-_P1 :: Operation
-_P1 c = _P '1' c
+perform :: Operation -> CompleteConfiguration -> CompleteConfiguration
+perform L = _L
+perform R = _R
+perform P0 = _P '0'
+perform P1 = _P '1'
+perform Px = _P 'x'
+perform Pә = _P 'ә'
+perform E = _P none
+
+perform (P x) = (_P x)
 
 
 configuration (m, n, tape) = (m, tape !! n)
@@ -158,7 +167,7 @@ getRow (r:rs) c = if configMatch c r then r
 
 apply :: [Operation] -> CompleteConfiguration -> CompleteConfiguration
 apply [] c = c
-apply (op:ops) c = apply ops (op c)
+apply (op:ops) c = apply ops (perform op c)
 
 move (TM n tape mconf table s) =
   let (m, sp, ops, f) = getRow table $ config (mconf, n, tape) in
@@ -246,22 +255,14 @@ tm1 = TM {
   tape = take 50 $ repeat none,
 
   table = [
-      (𝔟, (==none), [    _P0    ],  𝔟),
-      (𝔟, (=='0' ), [_R, _R, _P1],  𝔟),
-      (𝔟, (=='1' ), [_R, _R, _P0],  𝔟)
+      (𝔟, (==none), [    P0    ],  𝔟),
+      (𝔟, (=='0' ), [ R, R, P1 ],  𝔟),
+      (𝔟, (=='1' ), [ R, R, P0 ],  𝔟)
       ],
 
   comments = "Turing's first example machine"
   }
 
-_Pә :: Operation
-_Pә c = _P 'ә' c
-
-_Px :: Operation
-_Px c = _P 'x' c
-
-_E :: Operation
-_E c = _P none c
 
 _None :: Symbol -> Bool
 _None = (==none)
@@ -289,16 +290,16 @@ tm2 = TM {
   tape = take 100 $ repeat ' ',
 
   table = [
-      (𝔟, (\x -> True), [_Pә, _R, _Pә, _R, _P0, _R, _R, _P0, _L, _L  ], 𝔬),
-      (𝔬, (=='1' ),     [             _R, _Px, _L, _L, _L            ], 𝔬),
-      (𝔬, (=='0' ),     [                                            ], 𝔮),
-      (𝔮, (`elem` "01"),[                    _R, _R                  ], 𝔮),
-      (𝔮, (==none),     [                   _P1, _L                  ], 𝔭),
-      (𝔭, (=='x'),      [                    _E, _R                  ], 𝔮),
-      (𝔭, (=='ә'),      [                      _R                    ], 𝔣),
-      (𝔭, (==none),     [                    _L, _L                  ], 𝔭),
-      (𝔣, (/= none),    [                    _R, _R                  ], 𝔣),
-      (𝔣, (==none),     [                   _P0,_L,_L                ], 𝔬)
+      (𝔟, (\x -> True), [ Pә, R, Pә, R, P0, R, R, P0, L, L ], 𝔬),
+      (𝔬, (=='1' ),     [             R, Px, L, L, L       ], 𝔬),
+      (𝔬, (=='0' ),     [                                  ], 𝔮),
+      (𝔮, (`elem` "01"),[                 R, R             ], 𝔮),
+      (𝔮, (==none),     [                 P1, L            ], 𝔭),
+      (𝔭, (=='x'),      [                 E, R             ], 𝔮),
+      (𝔭, (=='ә'),      [                  R               ], 𝔣),
+      (𝔭, (==none),     [                 L, L             ], 𝔭),
+      (𝔣, (/= none),    [                 R, R             ], 𝔣),
+      (𝔣, (==none),     [               P0, L, L           ], 𝔬)
       ],
 
   comments = "Turing's second example machine (Turing 1936)"
