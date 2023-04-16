@@ -22,7 +22,7 @@ module Turing1936 (
   mconfig, config,
   apply, operations, move, moves,
   condense, getRow,
-  configMatch, symbolPredicate, symp,
+  configMatch, SymbolPredicate (..), sym,
   prettyConfig, printSteps,
   𝔞,𝔟,𝔠,𝔣,𝔬,𝔭,𝔮,
   isMconfig,isSymbol,isNumScannedSquare,
@@ -91,16 +91,48 @@ configurations will be called the /moves/ of the machine." -}
 -- move :: TuringMachine -> CompleteConfiguration -> CompleteConfiguration
 move :: TuringMachine -> TuringMachine
 
-data Operation = L  | R
-                 | P0 | P1 | Pә | Px
-                 | P Char
-                 | E
+data Operation = L | R
+               | P0 | P1 | Pә | Px
+               | P Char
+               | E
+               deriving (Show, Eq)
 
 type Op                    = CompleteConfiguration -> CompleteConfiguration
 type Operations            = [Operation]
 
-type SymbolPred            = Symbol -> Bool
-type TuringMachineRow      = (MConfig, SymbolPred, Operations, MConfig)
+{-|
+
+The symbol predicates used by Turing are defined implicitly and via exampls.
+Some relevant mentions are:
+
+"The "scanned symbol" is the only one of which the machine is, so to speak,
+"directly aware"."
+
+..
+
+"The possible behaviour of the machine at any moment is determined by the
+m-configuration qn and the scanned symbol 𝔖 (r).
+
+
+(p. 231)
+
+"Some of the symbols written down will form the sequence of figures which is the
+decimal of the real number which is being computed. The others are just rough
+notes to "assist the memory ".
+(p. 232)
+
+"When the second column is left blank, it is understood that the behaviour of
+the third and fourth columns applies for any symbol and for no symbol."
+
+(p. 233)
+-}
+data SymbolPredicate       = Is Char
+                           | AnyOf String
+                           | Any | None
+                           | All
+                           deriving (Show, Eq)
+
+type TuringMachineRow      = (MConfig, SymbolPredicate, Operations, MConfig)
 type TuringMachineTable    = [TuringMachineRow]
 type Table                 = TuringMachineTable
 
@@ -112,9 +144,14 @@ data TuringMachine = TM {
   comments :: String
 }
 
-symbolPredicate :: TuringMachineRow -> (Symbol -> Bool)
-symbolPredicate (_,s,_,_) = s
-symp = symbolPredicate
+
+sym :: SymbolPredicate -> Symbol -> Bool
+sym (Is c)    = (==c)
+sym (AnyOf s) = (`elem` s)
+sym Any       = (/= ' ')
+sym None      = (==' ')
+sym All       = (\x -> True)
+
 
 operations :: TuringMachineRow -> Operations
 operations (_,_,ops,_) = ops
@@ -143,13 +180,13 @@ _P s (m, n, t) = (m, n, put s t n)
 
 
 perform :: Operation -> CompleteConfiguration -> CompleteConfiguration
-perform L = _L
-perform R = _R
+perform L  = _L
+perform R  = _R
 perform P0 = _P '0'
 perform P1 = _P '1'
 perform Px = _P 'x'
 perform Pә = _P 'ә'
-perform E = _P none
+perform E  = _P ' '
 
 perform (P x) = (_P x)
 
@@ -157,9 +194,8 @@ perform (P x) = (_P x)
 configuration (m, n, tape) = (m, tape !! n)
 config = configuration
 
-
 configMatch :: Configuration -> TuringMachineRow -> Bool
-configMatch (m, s) (m', sp, _, _) = m == m' && sp s
+configMatch (m, s) (m', sp, _, _) = m == m' && sym sp s
 
 getRow :: TuringMachineTable -> Configuration -> TuringMachineRow
 getRow (r:rs) c = if configMatch c r then r
@@ -208,8 +244,6 @@ printConfigs s = mapM_ (putStrLn . prettyConfig) s
 
 printSteps n tm = printConfigs (step n tm)
 
-{-| "When the second column is left blank, it is understood that the behaviour of
-the third and fourth columns applies for any symbol and for no symbol." -}
 none = ' '
 
 
@@ -255,9 +289,9 @@ tm1 = TM {
   tape = take 50 $ repeat none,
 
   table = [
-      (𝔟, (==none), [    P0    ],  𝔟),
-      (𝔟, (=='0' ), [ R, R, P1 ],  𝔟),
-      (𝔟, (=='1' ), [ R, R, P0 ],  𝔟)
+      (𝔟, None,   [    P0    ],  𝔟),
+      (𝔟, Is '0', [ R, R, P1 ],  𝔟),
+      (𝔟, Is '1', [ R, R, P0 ],  𝔟)
       ],
 
   comments = "Turing's first example machine"
@@ -290,16 +324,16 @@ tm2 = TM {
   tape = take 100 $ repeat ' ',
 
   table = [
-      (𝔟, (\x -> True), [ Pә, R, Pә, R, P0, R, R, P0, L, L ], 𝔬),
-      (𝔬, (=='1' ),     [             R, Px, L, L, L       ], 𝔬),
-      (𝔬, (=='0' ),     [                                  ], 𝔮),
-      (𝔮, (`elem` "01"),[                 R, R             ], 𝔮),
-      (𝔮, (==none),     [                 P1, L            ], 𝔭),
-      (𝔭, (=='x'),      [                 E, R             ], 𝔮),
-      (𝔭, (=='ә'),      [                  R               ], 𝔣),
-      (𝔭, (==none),     [                 L, L             ], 𝔭),
-      (𝔣, (/= none),    [                 R, R             ], 𝔣),
-      (𝔣, (==none),     [               P0, L, L           ], 𝔬)
+      (𝔟, All, [ Pә, R, Pә, R, P0, R, R, P0, L, L ], 𝔬),
+      (𝔬, Is '1',     [             R, Px, L, L, L       ], 𝔬),
+      (𝔬, Is '0',     [                                  ], 𝔮),
+      (𝔮, AnyOf "01", [                 R, R             ], 𝔮),
+      (𝔮, None,       [                 P1, L            ], 𝔭),
+      (𝔭, Is 'x',     [                 E, R             ], 𝔮),
+      (𝔭, Is 'ә',     [                  R               ], 𝔣),
+      (𝔭, None,       [                 L, L             ], 𝔭),
+      (𝔣, Any,        [                 R, R             ], 𝔣),
+      (𝔣, None,       [               P0, L, L           ], 𝔬)
       ],
 
   comments = "Turing's second example machine (Turing 1936)"

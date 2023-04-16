@@ -17,13 +17,13 @@ completeConfig2 :: CompleteConfiguration
 completeConfig2 = ('𝔟', 7, "Turing's Machine")
 
 tmrow1 :: TuringMachineRow
-tmrow1 = (𝔟, (==none), [P0],  𝔟)
+tmrow1 = (𝔟, None, [P0],  𝔟)
 
 tmrow2 :: TuringMachineRow
-tmrow2 = (𝔟, (=='0'), [R, R, P1],  𝔟)
+tmrow2 = (𝔟, Is '0', [R, R, P1],  𝔟)
 
 tmrow3 :: TuringMachineRow
-tmrow3 = (𝔟, (=='1'), [R, R, P0],  𝔟)
+tmrow3 = (𝔟, Is '1', [R, R, P0],  𝔟)
 
 -- tm1init :: CompleteConfiguration
 -- tm1init = (𝔟, 0, take 50 $ repeat ' ')
@@ -37,7 +37,7 @@ tmloop1 = TM {
   tape = " ",
   position = 0,
   m_config = 𝔟,
-  table = [(𝔟, (\x -> True), [], 𝔟)],
+  table = [(𝔟, All, [], 𝔟)],
   comments = ""
   }
 
@@ -104,7 +104,7 @@ spec = do
 
       it "The second element is a symbol predicate" $ do
         let (_,sp,_,_) = tmrow1 in
-          assertBool "Impossible" ((\x -> sp x `elem` [True, False]) 'x')
+          assertBool "Impossible" ((\x -> sym sp x `elem` [True, False]) 'x')
 
       it "The third element is a list of operations" $ do
         let (_,_,ops,_) = tmrow1 in
