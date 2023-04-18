@@ -167,7 +167,8 @@ gothicFraktur = [𝔞,𝔟,𝔠,𝔡,𝔢,𝔣,𝔤,𝔥,𝔦,𝔧,𝔨,𝔩,�
 mconfigNames  = gothicFraktur
 
 _R :: Op
-_R (m, n, t) = (m, n + 1, t)
+_R (m, n, t) = let t' = if n < length t then t else t ++ "  "
+               in (m, n + 1, t')
 
 _L :: Op
 _L (m, n, t) = (m, n - 1, t)
