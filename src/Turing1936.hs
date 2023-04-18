@@ -88,7 +88,6 @@ configuration :: CompleteConfiguration -> Configuration
 
 {-| "The changes of the machine and tape between successive complete
 configurations will be called the /moves/ of the machine." -}
--- move :: TuringMachine -> CompleteConfiguration -> CompleteConfiguration
 move :: TuringMachine -> TuringMachine
 
 data Operation = L | R
@@ -142,7 +141,7 @@ data TuringMachine = TM {
   m_config :: MConfig,
   table    :: TuringMachineTable,
   comments :: String
-}
+} deriving (Show, Eq)
 
 
 sym :: SymbolPredicate -> Symbol -> Bool
